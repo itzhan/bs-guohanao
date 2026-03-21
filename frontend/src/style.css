@@ -1,0 +1,288 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ======================== */
+/*  Dark Rhythm 设计系统     */
+/* ======================== */
+:root {
+  /* 品牌色 */
+  --primary: #6C5CE7;
+  --primary-hover: #7C6FF0;
+  --primary-glow: rgba(108, 92, 231, 0.4);
+  --accent: #00CEC9;
+  --accent-glow: rgba(0, 206, 201, 0.3);
+  --warm: #FD79A8;
+  --warm-glow: rgba(253, 121, 168, 0.3);
+
+  /* 表面色 */
+  --bg-primary: #0D1117;
+  --bg-card: #161B22;
+  --bg-elevated: #21262D;
+  --bg-input: rgba(255, 255, 255, 0.04);
+
+  /* 边框 */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+
+  /* 文字 */
+  --text-primary: #E6EDF3;
+  --text-secondary: #8B949E;
+  --text-tertiary: #484F58;
+
+  /* 语义 */
+  --success: #3FB950;
+  --warning: #D29922;
+  --error: #F85149;
+
+  /* 阴影 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 40px var(--primary-glow);
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* 过渡 */
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ======================== */
+/*  全局复位 & 基础          */
+/* ======================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app { width: 100%; min-height: 100vh; }
+a { text-decoration: none; color: inherit; }
+img { display: block; max-width: 100%; }
+
+/* ======================== */
+/*  自定义滚动条            */
+/* ======================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* ======================== */
+/*  布局容器                */
+/* ======================== */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ======================== */
+/*  分区标题                */
+/* ======================== */
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--primary), var(--accent));
+  flex-shrink: 0;
+}
+
+/* ======================== */
+/*  歌曲卡片                */
+/* ======================== */
+.song-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  position: relative;
+}
+.song-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-md), 0 0 30px rgba(108, 92, 231, 0.1);
+  border-color: var(--border-hover);
+}
+.song-card .cover-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.song-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.song-card:hover img {
+  transform: scale(1.08);
+}
+.song-card .cover-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.song-card:hover .cover-wrap::after {
+  opacity: 1;
+}
+.song-card .play-icon {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all var(--transition);
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+.song-card:hover .play-icon {
+  opacity: 1;
+  transform: translateY(0);
+}
+.song-card .play-icon::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 7px 0 7px 12px;
+  border-color: transparent transparent transparent #fff;
+  margin-left: 2px;
+}
+
+.song-card .info {
+  padding: 14px;
+}
+.song-card .info .title {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+.song-card .info .artist {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.song-card .info .meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.song-card .info .meta .play-count {
+  color: var(--accent);
+}
+.song-card .info .meta .rating {
+  color: var(--warm);
+}
+
+/* ======================== */
+/*  网格系统                */
+/* ======================== */
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+.grid-5 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+/* ======================== */
+/*  过渡动画                */
+/* ======================== */
+.fade-slide-up-enter-active,
+.fade-slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fade-slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.fade-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 渐入动画 - 用于列表子元素 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* 数字滚动动画 */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 脉冲发光 */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* 浮动音符 */
+@keyframes float-note {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ======================== */
+/*  全局 Naive UI 暗色适配  */
+/* ======================== */
+.n-card {
+  --n-color: var(--bg-card) !important;
+  --n-border-color: var(--border) !important;
+}

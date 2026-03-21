@@ -1,0 +1,200 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/user'
+import { login as loginApi } from '../api'
+import { NForm, NFormItem, NInput, NButton, useMessage } from 'naive-ui'
+
+const router = useRouter()
+const userStore = useUserStore()
+const message = useMessage()
+const loading = ref(false)
+const form = ref({ username: '', password: '' })
+
+async function handleLogin() {
+  if (!form.value.username || !form.value.password) { message.warning('请输入账号和密码'); return }
+  loading.value = true
+  try {
+    const res = await loginApi(form.value)
+    userStore.setLogin(res.data.token, res.data.user)
+    message.success('登录成功')
+    router.push('/')
+  } catch (e) { message.error(e.message || '登录失败') }
+  finally { loading.value = false }
+}
+</script>
+
+<template>
+  <div class="auth-page">
+    <!-- 浮动音符装饰 -->
+    <div class="floating-notes">
+      <span v-for="i in 12" :key="i" class="note" :style="{ left: (i * 8.3) + '%', animationDelay: (i * 0.8) + 's', animationDuration: (12 + i * 1.5) + 's' }">♪</span>
+    </div>
+
+    <!-- 背景光晕 -->
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+
+    <div class="auth-card">
+      <!-- Logo -->
+      <div class="auth-header">
+        <div class="auth-logo">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="url(#authGrad)" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="3" fill="url(#authGrad)"/>
+            <path d="M12 2C12 2 12 8 12 12" stroke="url(#authGrad)" stroke-width="1.5" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="authGrad" x1="0" y1="0" x2="24" y2="24">
+                <stop stop-color="#6C5CE7"/>
+                <stop offset="1" stop-color="#00CEC9"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2>欢迎回来</h2>
+        <p>登录以获取个性化音乐推荐</p>
+      </div>
+
+      <n-form :model="form" @submit.prevent="handleLogin">
+        <n-form-item>
+          <n-input v-model:value="form.username" placeholder="用户名" size="large" />
+        </n-form-item>
+        <n-form-item>
+          <n-input v-model:value="form.password" type="password" placeholder="密码" size="large" show-password-on="click" @keyup.enter="handleLogin" />
+        </n-form-item>
+        <n-button type="primary" block size="large" :loading="loading" @click="handleLogin" class="login-btn">
+          登 录
+        </n-button>
+      </n-form>
+
+      <div class="auth-footer">
+        <span>还没有账号？</span>
+        <router-link to="/register">立即注册</router-link>
+      </div>
+      <div class="auth-hint">测试账号: user1 / 123456</div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 背景光晕 */
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.bg-orb-1 {
+  width: 400px; height: 400px;
+  background: rgba(108, 92, 231, 0.15);
+  top: -100px; left: -100px;
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+.bg-orb-2 {
+  width: 350px; height: 350px;
+  background: rgba(0, 206, 201, 0.1);
+  bottom: -80px; right: -80px;
+  animation: pulse-glow 10s ease-in-out infinite 2s;
+}
+.bg-orb-3 {
+  width: 250px; height: 250px;
+  background: rgba(253, 121, 168, 0.08);
+  top: 40%; right: 20%;
+  animation: pulse-glow 12s ease-in-out infinite 4s;
+}
+
+/* 浮动音符 */
+.floating-notes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.note {
+  position: absolute;
+  bottom: -40px;
+  font-size: 20px;
+  color: rgba(108, 92, 231, 0.15);
+  animation: float-note 20s linear infinite;
+}
+.note:nth-child(even) { color: rgba(0, 206, 201, 0.12); font-size: 16px; }
+.note:nth-child(3n) { color: rgba(253, 121, 168, 0.1); font-size: 24px; }
+
+/* 卡片 */
+.auth-card {
+  width: 420px;
+  padding: 40px 36px;
+  border-radius: 20px;
+  background: rgba(22, 27, 34, 0.8);
+  backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo {
+  display: inline-flex;
+  margin-bottom: 16px;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+.auth-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.auth-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.login-btn {
+  margin-top: 8px;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+.auth-footer span {
+  color: var(--text-tertiary);
+}
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 500;
+  margin-left: 4px;
+  transition: color var(--transition);
+}
+.auth-footer a:hover {
+  color: var(--primary-hover);
+}
+
+.auth-hint {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+</style>
