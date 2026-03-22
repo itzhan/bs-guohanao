@@ -2,8 +2,22 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('admin_token') || '')
-  const userInfo = ref(JSON.parse(localStorage.getItem('admin_user') || 'null'))
+  const token = ref('')
+  const userInfo = ref(null)
+
+  function readStoredUser() {
+    try {
+      return JSON.parse(localStorage.getItem('admin_user') || 'null')
+    } catch {
+      localStorage.removeItem('admin_user')
+      return null
+    }
+  }
+
+  function hydrate() {
+    token.value = localStorage.getItem('admin_token') || ''
+    userInfo.value = readStoredUser()
+  }
 
   function setLogin(t, user) {
     token.value = t
@@ -19,5 +33,7 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('admin_user')
   }
 
-  return { token, userInfo, setLogin, logout }
+  hydrate()
+
+  return { token, userInfo, hydrate, setLogin, logout }
 })

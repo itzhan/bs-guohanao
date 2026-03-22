@@ -32,6 +32,7 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-music-secret-2026')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
     JWT_TOKEN_LOCATION = ['headers']
+    JWT_IDENTITY_CLAIM = 'identity'
     JWT_HEADER_NAME = 'Authorization'
     JWT_HEADER_TYPE = 'Bearer'
 

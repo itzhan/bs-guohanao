@@ -31,8 +31,10 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   document.title = `${to.meta.title || '管理端'} - 音乐推荐系统`
-  if (to.meta.noAuth) return next()
   const userStore = useUserStore()
+  userStore.hydrate()
+
+  if (to.meta.noAuth) return next()
   if (!userStore.token) return next('/login')
   next()
 })

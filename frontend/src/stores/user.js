@@ -2,9 +2,23 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('music_token') || '')
-  const userInfo = ref(JSON.parse(localStorage.getItem('music_user') || 'null'))
+  const token = ref('')
+  const userInfo = ref(null)
   const isLoggedIn = computed(() => !!token.value)
+
+  function readStoredUser() {
+    try {
+      return JSON.parse(localStorage.getItem('music_user') || 'null')
+    } catch {
+      localStorage.removeItem('music_user')
+      return null
+    }
+  }
+
+  function hydrate() {
+    token.value = localStorage.getItem('music_token') || ''
+    userInfo.value = readStoredUser()
+  }
 
   function setLogin(t, user) {
     token.value = t
@@ -25,5 +39,7 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('music_user', JSON.stringify(user))
   }
 
-  return { token, userInfo, isLoggedIn, setLogin, logout, updateUser }
+  hydrate()
+
+  return { token, userInfo, isLoggedIn, hydrate, setLogin, logout, updateUser }
 })

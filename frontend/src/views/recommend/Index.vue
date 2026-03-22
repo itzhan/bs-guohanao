@@ -12,7 +12,6 @@ const recs = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
-  if (!userStore.isLoggedIn) { router.push('/login'); return }
   try { const res = await getRecommendations(20); recs.value = res.data || [] }
   catch (e) { message.error(e.message || '加载推荐失败') }
   finally { loading.value = false }

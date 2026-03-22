@@ -62,6 +62,11 @@ watch(() => route.query.keyword, () => { page.value = 1; loadData() })
           <div class="meta">
             <span class="play-count">▶ {{ (s.playCount || 0).toLocaleString() }}</span>
             <span class="rating">★ {{ s.avgRating || '-' }}</span>
+            <span v-if="s.commentCount" class="comment-count">💬 {{ s.commentCount }}</span>
+          </div>
+          <div class="card-tags" v-if="s.language || s.genreName">
+            <span v-if="s.language" class="card-tag">{{ s.language }}</span>
+            <span v-if="s.genreName" class="card-tag genre">{{ s.genreName }}</span>
           </div>
         </div>
       </div>
@@ -104,5 +109,29 @@ watch(() => route.query.keyword, () => { page.value = 1; loadData() })
   justify-content: center;
   margin-top: 32px;
   padding-bottom: 16px;
+}
+
+.comment-count {
+  color: var(--text-tertiary);
+}
+
+.card-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.card-tag {
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: rgba(0, 206, 201, 0.12);
+  color: #00CEC9;
+  border: 1px solid rgba(0, 206, 201, 0.2);
+}
+.card-tag.genre {
+  background: rgba(108, 92, 231, 0.12);
+  color: #A29BFE;
+  border-color: rgba(108, 92, 231, 0.2);
 }
 </style>

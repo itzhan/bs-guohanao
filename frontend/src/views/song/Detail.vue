@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NCard, NSpace, NButton, NRate, NInput, NAvatar, NTag, NEmpty, useMessage } from 'naive-ui'
 import { getSongDetail, getMyRating, rateSong, toggleFavorite, checkFavorite, addComment, getComments, recordPlay, getSimilarSongs } from '../../api'
@@ -17,8 +17,11 @@ const commentsTotal = ref(0)
 const newComment = ref('')
 const similar = ref([])
 
-onMounted(async () => {
-  const id = route.params.id
+async function loadSong(id) {
+  song.value = null
+  myRating.value = 0
+  isFav.value = false
+  similar.value = []
   try {
     const res = await getSongDetail(id)
     song.value = res.data
@@ -34,7 +37,11 @@ onMounted(async () => {
     }
     loadComments()
   } catch (e) { message.error('歌曲不存在') }
-})
+}
+
+onMounted(() => loadSong(route.params.id))
+watch(() => route.params.id, (newId) => { if (newId) loadSong(newId) })
+
 
 async function loadComments() {
   const res = await getComments(route.params.id, { page: 1, pageSize: 20 })

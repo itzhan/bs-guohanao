@@ -14,7 +14,6 @@ const navItems = [
   { label: '首页', path: '/' },
   { label: '音乐库', path: '/songs' },
   { label: '个性化推荐', path: '/recommend' },
-  { label: '数据分析', path: '/stats' },
 ]
 
 const dropdownOptions = [
@@ -117,7 +116,6 @@ function handleSearch() {
             <h4>浏览</h4>
             <router-link to="/">首页</router-link>
             <router-link to="/songs">音乐库</router-link>
-            <router-link to="/stats">数据分析</router-link>
           </div>
           <div class="footer-col">
             <h4>功能</h4>

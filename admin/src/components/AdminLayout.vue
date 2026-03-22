@@ -2,8 +2,8 @@
 import { h, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
-import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NIcon, NDropdown, NAvatar, NSpace, NText, NBadge } from 'naive-ui'
-import { MusicalNotesOutline, PeopleOutline, DiscOutline, GridOutline, ChatbubblesOutline, ReaderOutline, HomeOutline, LogOutOutline, PersonOutline, ColorPaletteOutline } from '@vicons/ionicons5'
+import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NIcon, NDropdown, NAvatar, NSpace, NText } from 'naive-ui'
+import { MusicalNotesOutline, PeopleOutline, GridOutline, ChatbubblesOutline, ReaderOutline, HomeOutline, LogOutOutline, PersonOutline, ColorPaletteOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const route = useRoute()
@@ -36,27 +36,108 @@ function handleDropdown(key) {
   <n-layout has-sider style="height: 100vh">
     <n-layout-sider bordered collapse-mode="width" :collapsed-width="64" :width="220" :collapsed="collapsed"
       show-trigger @collapse="collapsed = true" @expand="collapsed = false"
-      :native-scrollbar="false" style="background: #001529">
-      <div style="padding: 20px; text-align: center; color: #fff; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden;">
-        {{ collapsed ? '🎵' : '🎵 音乐推荐管理端' }}
+      :native-scrollbar="false" class="admin-sider">
+      <!-- 品牌 Logo 区 -->
+      <div class="sider-logo">
+        <div class="logo-icon">
+          <n-icon size="22" color="#fff"><MusicalNotesOutline /></n-icon>
+        </div>
+        <transition name="fade">
+          <span v-if="!collapsed" class="logo-text">音乐推荐管理端</span>
+        </transition>
       </div>
       <n-menu :collapsed="collapsed" :collapsed-width="64" :collapsed-icon-size="22" :options="menuOptions"
-        :value="activeKey" @update:value="handleMenuUpdate" :indent="24"
-        inverted style="--n-item-text-color: rgba(255,255,255,0.65); --n-item-text-color-active: #fff;" />
+        :value="activeKey" @update:value="handleMenuUpdate" :indent="24" inverted />
     </n-layout-sider>
     <n-layout>
-      <n-layout-header bordered style="height: 56px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; background: #fff;">
-        <n-text strong style="font-size: 16px; color: #333;">{{ route.meta.title || '管理端' }}</n-text>
+      <n-layout-header bordered class="admin-header">
+        <div class="header-title">
+          <div class="header-title-dot"></div>
+          <n-text strong style="font-size: 16px;">{{ route.meta.title || '管理端' }}</n-text>
+        </div>
         <n-dropdown :options="dropdownOptions" @select="handleDropdown" trigger="click">
-          <n-space align="center" style="cursor: pointer;">
-            <n-avatar round size="small" style="background: #7265e6">{{ userStore.userInfo?.nickname?.[0] || 'A' }}</n-avatar>
-            <n-text>{{ userStore.userInfo?.nickname || '管理员' }}</n-text>
+          <n-space align="center" style="cursor: pointer; gap: 10px;">
+            <n-avatar round size="small" class="header-avatar">{{ userStore.userInfo?.nickname?.[0] || 'A' }}</n-avatar>
+            <n-text style="color: var(--text-secondary);">{{ userStore.userInfo?.nickname || '管理员' }}</n-text>
           </n-space>
         </n-dropdown>
       </n-layout-header>
-      <n-layout-content style="padding: 20px; background: #f0f2f5;">
+      <n-layout-content class="admin-content">
         <router-view />
       </n-layout-content>
     </n-layout>
   </n-layout>
 </template>
+
+<style scoped>
+.admin-sider {
+  background: var(--bg-card) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+.sider-logo {
+  padding: 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.admin-header {
+  height: 56px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-title-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+.header-avatar {
+  background: linear-gradient(135deg, var(--primary), var(--warm)) !important;
+  font-weight: 600;
+}
+
+.admin-content {
+  padding: 24px;
+  background: var(--bg-primary) !important;
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
