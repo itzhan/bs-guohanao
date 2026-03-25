@@ -166,7 +166,7 @@ class AdminService:
         genre = Genre(name=data.get('name'), description=data.get('description'))
         db.session.add(genre)
         db.session.commit()
-        return genre
+        return genre, None
 
     @staticmethod
     def delete_genre(genre_id):

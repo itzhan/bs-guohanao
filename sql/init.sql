@@ -163,6 +163,8 @@ CREATE TABLE `comments` (
     `content` TEXT NOT NULL COMMENT '评论内容',
     `parent_id` INT COMMENT '父评论ID(回复)',
     `like_count` INT DEFAULT 0 COMMENT '点赞数',
+    `sentiment_score` FLOAT COMMENT '情感得分(0-1)',
+    `sentiment_label` VARCHAR(20) COMMENT '情感标签：正向/中性/负向',
     `status` SMALLINT DEFAULT 1 COMMENT '状态：0-隐藏 1-正常',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,

@@ -41,6 +41,58 @@ DB_CONFIG = {
     'database': os.getenv('DB_NAME', 'music_recommend'),
 }
 
+# HDFS 配置
+HDFS_HOST = os.getenv('HDFS_HOST', 'namenode')
+HDFS_PORT = int(os.getenv('HDFS_PORT', 9000))
+HDFS_BASE_PATH = '/music/processed'
+
+
+def load_data_from_hdfs():
+    """尝试从 HDFS 加载预处理后的数据"""
+    try:
+        from hdfs import InsecureClient
+        hdfs_url = os.getenv('HDFS_URL', f'http://{HDFS_HOST}:9870')
+        client = InsecureClient(hdfs_url, user='root')
+
+        # 检查 HDFS 上是否有预处理数据
+        status = client.status(HDFS_BASE_PATH, strict=False)
+        if status is None:
+            print("  HDFS 上无预处理数据，回退到 MySQL")
+            return None, None, None
+
+        print(f"  从 HDFS ({HDFS_BASE_PATH}) 读取预处理数据...")
+        import io
+
+        with client.read(f'{HDFS_BASE_PATH}/processed_ratings.csv') as reader:
+            ratings_df = pd.read_csv(io.BytesIO(reader.read()))
+        with client.read(f'{HDFS_BASE_PATH}/processed_play_history.csv') as reader:
+            play_df = pd.read_csv(io.BytesIO(reader.read()))
+
+        # 收藏数据需要从 MySQL 获取（预处理脚本未导出）
+        import pymysql
+        conn = pymysql.connect(**DB_CONFIG, charset='utf8mb4')
+        fav_df = pd.read_sql("SELECT user_id, song_id, created_at FROM favorites", conn)
+        conn.close()
+
+        print(f"  ✓ 从 HDFS 成功加载数据")
+        return ratings_df, play_df, fav_df
+
+    except ImportError:
+        print("  hdfs 库未安装，回退到 MySQL")
+        return None, None, None
+    except Exception as e:
+        print(f"  HDFS 读取失败 ({e})，回退到 MySQL")
+        return None, None, None
+
+
+def load_data_with_hdfs_fallback():
+    """优先从 HDFS 加载数据，失败则从 MySQL 加载"""
+    ratings_df, play_df, fav_df = load_data_from_hdfs()
+    if ratings_df is not None:
+        return ratings_df, play_df, fav_df
+    print("  从 MySQL 直接加载数据...")
+    return load_data_from_mysql()
+
 
 def load_data_from_mysql():
     """从 MySQL 加载用户行为数据"""
@@ -271,9 +323,9 @@ def main():
     print(f"  开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
 
-    # 1. 加载数据
-    print("[1/4] 从 MySQL 加载用户行为数据...")
-    ratings_df, play_df, fav_df = load_data_from_mysql()
+    # 1. 加载数据（优先从 HDFS 读取预处理数据，失败则回退 MySQL）
+    print("[1/4] 加载用户行为数据...")
+    ratings_df, play_df, fav_df = load_data_with_hdfs_fallback()
     print(f"  评分记录: {len(ratings_df)} 条")
     print(f"  播放记录: {len(play_df)} 条")
     print(f"  收藏记录: {len(fav_df)} 条")

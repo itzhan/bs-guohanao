@@ -3,7 +3,7 @@ import { h, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NIcon, NDropdown, NAvatar, NSpace, NText } from 'naive-ui'
-import { MusicalNotesOutline, PeopleOutline, GridOutline, ChatbubblesOutline, ReaderOutline, HomeOutline, LogOutOutline, PersonOutline, ColorPaletteOutline } from '@vicons/ionicons5'
+import { MusicalNotesOutline, PeopleOutline, GridOutline, ChatbubblesOutline, ReaderOutline, HomeOutline, LogOutOutline, PersonOutline, ColorPaletteOutline, AnalyticsOutline, SettingsOutline, WarningOutline, FingerPrintOutline, FlaskOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
 const route = useRoute()
@@ -16,7 +16,10 @@ const menuOptions = [
   { label: '歌手管理', key: '/artists', icon: () => h(NIcon, null, { default: () => h(PersonOutline) }) },
   { label: '流派管理', key: '/genres', icon: () => h(NIcon, null, { default: () => h(ColorPaletteOutline) }) },
   { label: '用户管理', key: '/users', icon: () => h(NIcon, null, { default: () => h(PeopleOutline) }) },
+  { label: '用户画像', key: '/portrait', icon: () => h(NIcon, null, { default: () => h(FingerPrintOutline) }) },
   { label: '评论管理', key: '/comments', icon: () => h(NIcon, null, { default: () => h(ChatbubblesOutline) }) },
+  { label: '推荐策略', key: '/strategy', icon: () => h(NIcon, null, { default: () => h(SettingsOutline) }) },
+  { label: '算法对比', key: '/experiment', icon: () => h(NIcon, null, { default: () => h(FlaskOutline) }) },
   { label: '操作日志', key: '/logs', icon: () => h(NIcon, null, { default: () => h(ReaderOutline) }) },
 ]
 

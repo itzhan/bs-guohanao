@@ -14,6 +14,7 @@ const navItems = [
   { label: '首页', path: '/' },
   { label: '音乐库', path: '/songs' },
   { label: '个性化推荐', path: '/recommend' },
+
 ]
 
 const dropdownOptions = [

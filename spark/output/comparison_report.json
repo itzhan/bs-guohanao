@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-03-25 04:49:08",
+  "k": 10,
+  "train_size": 36,
+  "test_size": 10,
+  "total_users": 10,
+  "total_songs": 32,
+  "results": {
+    "UserCF": {
+      "precision": 3.33,
+      "recall": 33.33,
+      "ndcg": 22.42,
+      "coverage": 59.38,
+      "users_evaluated": 9
+    },
+    "ContentBased": {
+      "precision": 10.0,
+      "recall": 100.0,
+      "ndcg": 82.62,
+      "coverage": 78.12,
+      "users_evaluated": 10
+    },
+    "ALS": {
+      "precision": 4.0,
+      "recall": 40.0,
+      "ndcg": 16.3,
+      "coverage": 65.62,
+      "users_evaluated": 10
+    }
+  },
+  "best_algorithm": "ContentBased",
+  "conclusion": "在 10 个用户、32 首歌曲的数据集上，ALS 矩阵分解算法在 Precision@10 上表现为 4.0%，基于用户的协同过滤为 3.33%，基于内容的推荐为 10.0%。综合准确率、召回率和 NDCG 指标，ContentBased 算法在本数据集上表现最优。"
+}

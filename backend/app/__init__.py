@@ -51,6 +51,11 @@ def _register_blueprints(app):
     from app.api.recommend import recommend_bp
     from app.api.stats import stats_bp
     from app.api.admin import admin_bp
+    from app.api.portrait import portrait_bp
+    from app.api.strategy import strategy_bp
+    from app.api.alert import alert_bp
+    from app.api.experiment import experiment_bp
+    from app.api.behavior import behavior_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(user_bp, url_prefix='/api/user')
@@ -59,6 +64,11 @@ def _register_blueprints(app):
     app.register_blueprint(recommend_bp, url_prefix='/api/recommend')
     app.register_blueprint(stats_bp, url_prefix='/api/stats')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(portrait_bp, url_prefix='/api/portrait')
+    app.register_blueprint(strategy_bp, url_prefix='/api/strategy')
+    app.register_blueprint(alert_bp, url_prefix='/api/alert')
+    app.register_blueprint(experiment_bp, url_prefix='/api/experiment')
+    app.register_blueprint(behavior_bp, url_prefix='/api/behavior')
 
 
 def _register_error_handlers(app):

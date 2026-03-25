@@ -6,7 +6,7 @@
 1. 从 MySQL 读取原始音乐数据
 2. 数据清洗：去重、缺失值处理、异常值过滤
 3. 特征工程：One-Hot 编码流派特征、TF-IDF 提取评论关键词、用户偏好标签生成
-4. 输出处理后的数据供 ALS 模型训练使用
+4. 输出处理后的数据：本地 CSV + HDFS 分布式存储
 """
 import os
 import json
@@ -22,6 +22,11 @@ DB_CONFIG = {
     'password': os.getenv('DB_PASS', 'ab123168'),
     'database': os.getenv('DB_NAME', 'music_recommend'),
 }
+
+# HDFS 配置
+HDFS_HOST = os.getenv('HDFS_HOST', 'namenode')
+HDFS_PORT = int(os.getenv('HDFS_PORT', 9000))
+HDFS_BASE_PATH = '/music/processed'
 
 
 def load_raw_data():
@@ -147,6 +152,50 @@ def generate_user_tags(users, ratings, genres):
     return users
 
 
+def upload_to_hdfs(output_dir):
+    """将处理后的数据上传到 HDFS 分布式文件系统"""
+    print(f"\n[HDFS] 上传处理结果到 HDFS (hdfs://{HDFS_HOST}:{HDFS_PORT}{HDFS_BASE_PATH})...")
+
+    try:
+        from hdfs import InsecureClient
+        hdfs_url = os.getenv('HDFS_URL', f'http://{HDFS_HOST}:9870')
+        client = InsecureClient(hdfs_url, user='root')
+
+        # 创建 HDFS 目录
+        client.makedirs(HDFS_BASE_PATH)
+
+        # 上传 CSV 文件
+        csv_files = [f for f in os.listdir(output_dir) if f.endswith('.csv')]
+        for filename in csv_files:
+            local_path = os.path.join(output_dir, filename)
+            hdfs_path = f'{HDFS_BASE_PATH}/{filename}'
+            client.upload(hdfs_path, local_path, overwrite=True)
+            file_size = os.path.getsize(local_path)
+            print(f"  ✓ 上传 {filename} ({file_size / 1024:.1f} KB) → {hdfs_path}")
+
+        # 上传元数据信息
+        meta = {
+            'upload_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'files': csv_files,
+            'hdfs_base_path': HDFS_BASE_PATH,
+            'source': '数据预处理脚本 (data_preprocessing.py)',
+        }
+        import io
+        meta_bytes = json.dumps(meta, ensure_ascii=False, indent=2).encode('utf-8')
+        client.write(f'{HDFS_BASE_PATH}/_metadata.json', data=io.BytesIO(meta_bytes), overwrite=True)
+        print(f"  ✓ 上传元数据 _metadata.json")
+
+        print(f"[HDFS] 全部上传完成，共 {len(csv_files)} 个数据文件")
+        return True
+
+    except ImportError:
+        print("[HDFS] 警告: hdfs 库未安装，跳过 HDFS 上传（pip install hdfs）")
+        return False
+    except Exception as e:
+        print(f"[HDFS] 警告: HDFS 上传失败 ({e})，数据已保存到本地 CSV")
+        return False
+
+
 def main():
     print("=" * 60)
     print("  音乐推荐系统 - 数据预处理脚本")
@@ -154,7 +203,7 @@ def main():
     print(f"  开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     # 1. 加载原始数据
-    print("\n[1/4] 加载原始数据...")
+    print("\n[1/5] 加载原始数据...")
     songs, users, ratings, play_history, favorites, comments, genres = load_raw_data()
 
     # 2. 数据清洗
@@ -176,7 +225,11 @@ def main():
     play_history.to_csv(os.path.join(output_dir, 'processed_play_history.csv'), index=False, encoding='utf-8-sig')
 
     print(f"\n  处理结果已保存到 {output_dir}/")
-    print(f"  完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    # 5. 上传到 HDFS 分布式存储
+    upload_to_hdfs(output_dir)
+
+    print(f"\n  完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
 
 

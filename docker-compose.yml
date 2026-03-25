@@ -1,0 +1,150 @@
+# ============================================================
+# 基于大数据的音乐推荐与数据分析系统 - Docker Compose
+# 使用方法: docker compose up --build -d
+# ============================================================
+
+name: music-recommend
+
+services:
+  # ---- MySQL 数据库 ----
+  mysql:
+    image: mysql:8.0
+    container_name: music-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ab123168
+      MYSQL_DATABASE: music_recommend
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./sql/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+      - ./sql/data_expand.sql:/docker-entrypoint-initdb.d/03-data_expand.sql
+      - ./sql/data_10x.sql:/docker-entrypoint-initdb.d/04-data_10x.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pab123168"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---- Redis 缓存 ----
+  redis:
+    image: redis:7-alpine
+    container_name: music-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---- MongoDB ----
+  mongo:
+    image: mongo:7
+    container_name: music-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # ---- HDFS NameNode（分布式文件存储） ----
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: music-namenode
+    restart: unless-stopped
+    ports:
+      - "19870:9870"
+      - "9900:9000"
+    environment:
+      - CLUSTER_NAME=music-hadoop
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - HDFS_CONF_dfs_replication=1
+      - HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check=false
+    volumes:
+      - hdfs_namenode:/hadoop/dfs/name
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9870/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ---- HDFS DataNode ----
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: music-datanode
+    restart: unless-stopped
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_CONF_dfs_replication=1
+    volumes:
+      - hdfs_datanode:/hadoop/dfs/data
+    depends_on:
+      namenode:
+        condition: service_healthy
+
+  # ---- Flask 后端 ----
+  backend:
+    build: ./backend
+    container_name: music-backend
+    restart: unless-stopped
+    ports:
+      - "5002:5001"
+    environment:
+      - FLASK_DEBUG=False
+      - SECRET_KEY=music-recommend-secret-key-2026
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=music_recommend
+      - DB_USER=root
+      - DB_PASS=ab123168
+      - JWT_SECRET_KEY=jwt-music-secret-2026
+      - REDIS_URL=redis://redis:6379/0
+      - MONGO_URI=mongodb://mongo:27017/
+      - MONGO_DB_NAME=music_recommend
+      - HDFS_URL=http://namenode:9870
+      - HDFS_HOST=namenode
+      - HDFS_PORT=9000
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    volumes:
+      - backend_uploads:/app/uploads
+      - ./spark:/app/spark
+
+  # ---- 用户前端 (端口 5173) ----
+  frontend:
+    build: ./frontend
+    container_name: music-frontend
+    restart: unless-stopped
+    ports:
+      - "5179:80"
+    depends_on:
+      - backend
+
+  # ---- 管理端 (端口 5174) ----
+  admin:
+    build: ./admin
+    container_name: music-admin
+    restart: unless-stopped
+    ports:
+      - "5176:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  mongo_data:
+  backend_uploads:
+  hdfs_namenode:
+  hdfs_datanode:

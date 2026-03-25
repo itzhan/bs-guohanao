@@ -4,17 +4,16 @@ import { NGrid, NGi, NCard, NSpace, NText, NIcon } from 'naive-ui'
 import { PeopleOutline, MusicalNotesOutline, PersonOutline, StarOutline, PlayOutline, ChatbubblesOutline } from '@vicons/ionicons5'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { BarChart, PieChart, RadarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent, LegendComponent, RadarComponent } from 'echarts/components'
+import { BarChart, PieChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import { getOverview, getRatingDistribution, getGenreDistribution, getTopArtists, getLanguageDistribution } from '../../api'
 
-use([CanvasRenderer, BarChart, PieChart, RadarChart, GridComponent, TooltipComponent, LegendComponent, RadarComponent])
+use([CanvasRenderer, BarChart, PieChart, GridComponent, TooltipComponent, LegendComponent])
 
 const overview = ref({})
 const ratingData = ref({})
 const genreData = ref([])
-
 const topArtists = ref([])
 const langData = ref([])
 const loaded = ref(false)
@@ -44,7 +43,6 @@ const statCards = [
   { title: '评论数量', key: 'totalComments', gradient: 'linear-gradient(135deg, #3FB950, #55efc4)', icon: ChatbubblesOutline },
 ]
 
-// ECharts 通用暗色 tooltip
 const darkTooltip = {
   backgroundColor: '#21262D',
   borderColor: 'rgba(255,255,255,0.08)',
@@ -121,51 +119,6 @@ const genreOption = computed(() => {
   }
 })
 
-// 数据概览雷达图
-const radarOption = computed(() => {
-  const indicators = [
-    { name: '用户', key: 'totalUsers' },
-    { name: '歌曲', key: 'totalSongs' },
-    { name: '歌手', key: 'totalArtists' },
-    { name: '评分', key: 'totalRatings' },
-    { name: '播放', key: 'totalPlays' },
-    { name: '评论', key: 'totalComments' },
-  ]
-  const vals = indicators.map(i => overview.value[i.key] || 0)
-  const maxVal = Math.max(...vals, 1)
-  return {
-    tooltip: { ...darkTooltip, trigger: 'item' },
-    radar: {
-      indicator: indicators.map(i => ({ name: i.name, max: maxVal })),
-      shape: 'circle',
-      splitNumber: 4,
-      axisName: { color: '#8B949E', fontSize: 12 },
-      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
-      splitArea: { areaStyle: { color: ['rgba(108,92,231,0.02)', 'rgba(108,92,231,0.05)'] } },
-      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-    },
-    series: [{
-      type: 'radar',
-      data: [{
-        value: vals,
-        name: '数据概览',
-        areaStyle: {
-          color: {
-            type: 'radial', x: 0.5, y: 0.5, r: 0.5,
-            colorStops: [
-              { offset: 0, color: 'rgba(108, 92, 231, 0.5)' },
-              { offset: 1, color: 'rgba(0, 206, 201, 0.15)' },
-            ]
-          }
-        },
-        lineStyle: { color: '#6C5CE7', width: 2 },
-        itemStyle: { color: '#6C5CE7', borderColor: '#fff', borderWidth: 1 },
-      }],
-      symbol: 'circle', symbolSize: 6,
-    }]
-  }
-})
-
 // 语言分布环形图
 const langOption = computed(() => {
   const colors = ['#6C5CE7', '#00CEC9', '#FD79A8', '#D29922', '#58A6FF', '#3FB950', '#F85149', '#a29bfe']
@@ -221,49 +174,44 @@ const medalColors = [
       </div>
     </div>
 
-    <!-- 图表区：第一行 -->
+    <!-- 第一行：评分分布 + 语言分布 -->
     <div class="chart-row">
       <n-card class="chart-card" title="评分分布" size="small" :style="{ animationDelay: '0.5s' }">
-        <v-chart :option="ratingOption" autoresize style="height: 260px;" />
+        <v-chart v-if="loaded" :option="ratingOption" autoresize style="height: 280px;" />
       </n-card>
-      <n-card class="chart-card" title="流派分布 Top 8" size="small" :style="{ animationDelay: '0.6s' }">
-        <v-chart :option="genreOption" autoresize style="height: 260px;" />
+      <n-card class="chart-card" title="语言分布" size="small" :style="{ animationDelay: '0.6s' }">
+        <v-chart v-if="loaded" :option="langOption" autoresize style="height: 280px;" />
       </n-card>
     </div>
 
-    <!-- 图表区：第二行 -->
+    <!-- 第二行：流派分布 + 热门歌手 -->
     <div class="chart-row">
-      <n-card class="chart-card" title="数据概览" size="small" :style="{ animationDelay: '0.7s' }">
-        <v-chart :option="radarOption" autoresize style="height: 260px;" />
+      <n-card class="chart-card" title="流派分布 Top 8" size="small" :style="{ animationDelay: '0.7s' }">
+        <v-chart v-if="loaded" :option="genreOption" autoresize style="height: 300px;" />
       </n-card>
-      <n-card class="chart-card" title="语言分布" size="small" :style="{ animationDelay: '0.8s' }">
-        <v-chart :option="langOption" autoresize style="height: 260px;" />
-      </n-card>
-    </div>
-
-    <!-- 热门歌手 -->
-    <n-card class="top-artists-card" title="热门歌手 Top 5" size="small" :style="{ animationDelay: '0.9s' }">
-      <div class="artist-list">
-        <div v-for="(a, idx) in topArtists" :key="a.id" class="artist-item">
-          <div class="artist-rank" :style="{ background: medalColors[idx] }">{{ idx + 1 }}</div>
-          <div class="artist-info">
-            <n-text strong style="font-size: 14px;">{{ a.name }}</n-text>
-            <n-text class="artist-plays">
-              <n-icon size="13" style="vertical-align: -2px; margin-right: 4px;"><PlayOutline /></n-icon>
-              {{ (a.totalPlays || 0).toLocaleString() }}
-            </n-text>
-          </div>
-          <div class="artist-bar-wrap">
-            <div class="artist-bar-fill"
-              :style="{
-                width: (topArtists.length && topArtists[0].totalPlays ? ((a.totalPlays || 0) / topArtists[0].totalPlays * 100) : 0) + '%',
-                background: medalColors[idx]
-              }">
+      <n-card class="chart-card top-artists-card" title="热门歌手 Top 5" size="small" :style="{ animationDelay: '0.8s' }">
+        <div class="artist-list">
+          <div v-for="(a, idx) in topArtists" :key="a.id" class="artist-item">
+            <div class="artist-rank" :style="{ background: medalColors[idx] }">{{ idx + 1 }}</div>
+            <div class="artist-info">
+              <n-text strong style="font-size: 14px;">{{ a.name }}</n-text>
+              <n-text class="artist-plays">
+                <n-icon size="13" style="vertical-align: -2px; margin-right: 4px;"><PlayOutline /></n-icon>
+                {{ (a.totalPlays || 0).toLocaleString() }}
+              </n-text>
+            </div>
+            <div class="artist-bar-wrap">
+              <div class="artist-bar-fill"
+                :style="{
+                  width: (topArtists.length && topArtists[0].totalPlays ? ((a.totalPlays || 0) / topArtists[0].totalPlays * 100) : 0) + '%',
+                  background: medalColors[idx]
+                }">
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </n-card>
+      </n-card>
+    </div>
   </div>
 </template>
 
@@ -277,14 +225,11 @@ const medalColors = [
 /* =================== */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-@media (max-width: 1400px) {
-  .stat-grid { grid-template-columns: repeat(3, 1fr); }
-}
 @media (max-width: 900px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -367,8 +312,6 @@ const medalColors = [
 /* =================== */
 .top-artists-card {
   border-radius: var(--radius-md) !important;
-  margin-bottom: 20px;
-  animation: fadeInUp 0.5s ease both;
 }
 
 .artist-list {

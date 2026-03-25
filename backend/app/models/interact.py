@@ -65,6 +65,8 @@ class Comment(db.Model):
     content = db.Column(db.Text, nullable=False, comment='评论内容')
     parent_id = db.Column(db.Integer, db.ForeignKey('comments.id'), comment='父评论ID(回复)')
     like_count = db.Column(db.Integer, default=0, comment='点赞数')
+    sentiment_score = db.Column(db.Float, comment='情感得分(0-1)')
+    sentiment_label = db.Column(db.String(20), comment='情感标签：正向/中性/负向')
     status = db.Column(db.SmallInteger, default=1, comment='状态：0-隐藏 1-正常')
     created_at = db.Column(db.DateTime, default=datetime.now)
 
@@ -81,6 +83,8 @@ class Comment(db.Model):
             'content': self.content,
             'parentId': self.parent_id,
             'likeCount': self.like_count,
+            'sentimentScore': self.sentiment_score,
+            'sentimentLabel': self.sentiment_label,
             'status': self.status,
             'createdAt': self.created_at.isoformat() if self.created_at else None,
         }

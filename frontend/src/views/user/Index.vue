@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { NTabs, NTabPane, NButton, NInput, NForm, NFormItem, NEmpty, NPagination, useMessage } from 'naive-ui'
-import { getUserInfo, updateUserInfo, changePassword, getFavorites, getHistory } from '../../api'
+import { NTabs, NTabPane, NButton, NInput, NForm, NFormItem, NEmpty, NPagination, NSelect, NSpace, NCheckboxGroup, NCheckbox, useMessage } from 'naive-ui'
+import { getUserInfo, updateUserInfo, changePassword, getFavorites, getHistory, getPreference, savePreference, getGenres, getArtists } from '../../api'
 import { useUserStore } from '../../stores/user'
 
 const router = useRouter()
@@ -18,14 +18,72 @@ const history = ref([])
 const histTotal = ref(0)
 const histPage = ref(1)
 
+// 偏好问卷
+const preference = ref({
+  favoriteGenres: [],
+  favoriteArtists: [],
+  listeningScenarios: [],
+  preferredLanguage: null,
+  moodPreference: null,
+})
+const genreOptions = ref([])
+const artistOptions = ref([])
+const scenarioOptions = [
+  { label: '运动健身', value: '运动健身' },
+  { label: '学习工作', value: '学习工作' },
+  { label: '睡前放松', value: '睡前放松' },
+  { label: '通勤路上', value: '通勤路上' },
+  { label: '聚会社交', value: '聚会社交' },
+  { label: '独处思考', value: '独处思考' },
+  { label: '做饭家务', value: '做饭家务' },
+]
+const langOptions = [
+  { label: '华语', value: '华语' },
+  { label: '欧美', value: '欧美' },
+  { label: '日语', value: '日语' },
+  { label: '韩语', value: '韩语' },
+  { label: '粤语', value: '粤语' },
+  { label: '不限', value: '不限' },
+]
+const moodOptions = [
+  { label: '开心愉悦', value: '开心愉悦' },
+  { label: '安静舒缓', value: '安静舒缓' },
+  { label: '激昂热血', value: '激昂热血' },
+  { label: '伤感治愈', value: '伤感治愈' },
+  { label: '浪漫抒情', value: '浪漫抒情' },
+  { label: '随心所欲', value: '随心所欲' },
+]
+
 onMounted(async () => {
   try {
     const res = await getUserInfo()
     user.value = res.data
     profileForm.value = { nickname: res.data.nickname || '', email: res.data.email || '', phone: res.data.phone || '' }
   } catch (e) { console.error(e) }
-  loadFavorites(); loadHistory()
+  loadFavorites(); loadHistory(); loadPreference()
 })
+
+async function loadPreference() {
+  try {
+    const [pRes, gRes, aRes] = await Promise.all([getPreference(), getGenres(), getArtists({ limit: 50 })])
+    if (pRes.data) {
+      preference.value.favoriteGenres = pRes.data.favoriteGenres ? JSON.parse(pRes.data.favoriteGenres) : []
+      preference.value.favoriteArtists = pRes.data.favoriteArtists ? JSON.parse(pRes.data.favoriteArtists) : []
+      preference.value.listeningScenarios = pRes.data.listeningScenarios ? JSON.parse(pRes.data.listeningScenarios) : []
+      preference.value.preferredLanguage = pRes.data.preferredLanguage || null
+      preference.value.moodPreference = pRes.data.moodPreference || null
+    }
+    genreOptions.value = (gRes.data || []).map(g => ({ label: g.name, value: g.name }))
+    artistOptions.value = (aRes.data?.records || aRes.data || []).map(a => ({ label: a.name, value: a.name }))
+  } catch (e) { console.error(e) }
+}
+
+async function savePref() {
+  try {
+    await savePreference(preference.value)
+    message.success('偏好已保存，推荐会更加精准！')
+  } catch (e) { message.error(e.message || '保存失败') }
+}
 
 async function loadFavorites() { try { const res = await getFavorites({ page: favPage.value, pageSize: 8 }); favorites.value = res.data?.records || []; favTotal.value = res.data?.total || 0 } catch (e) {} }
 async function loadHistory() { try { const res = await getHistory({ page: histPage.value, pageSize: 10 }); history.value = res.data?.records || []; histTotal.value = res.data?.total || 0 } catch (e) {} }
@@ -102,6 +160,40 @@ async function savePassword() {
           </div>
           <n-empty v-else description="还没有收藏歌曲" style="margin: 40px 0;" />
           <div class="pagination-wrap" v-if="favTotal > 8"><n-pagination v-model:page="favPage" :page-count="Math.ceil(favTotal/8)" @update:page="loadFavorites" /></div>
+        </n-tab-pane>
+
+        <!-- 音乐偏好 -->
+        <n-tab-pane name="preference" tab="音乐偏好">
+          <div class="pref-section">
+            <h3 class="pref-title">🎵 喜爱流派</h3>
+            <n-checkbox-group v-model:value="preference.favoriteGenres">
+              <n-space>
+                <n-checkbox v-for="g in genreOptions" :key="g.value" :value="g.value" :label="g.label" />
+              </n-space>
+            </n-checkbox-group>
+          </div>
+          <div class="pref-section">
+            <h3 class="pref-title">🎤 喜爱歌手</h3>
+            <n-select v-model:value="preference.favoriteArtists" :options="artistOptions" multiple filterable
+              placeholder="搜索并选择喜爱的歌手" max-tag-count="responsive" />
+          </div>
+          <div class="pref-section">
+            <h3 class="pref-title">🎧 听歌场景</h3>
+            <n-checkbox-group v-model:value="preference.listeningScenarios">
+              <n-space>
+                <n-checkbox v-for="s in scenarioOptions" :key="s.value" :value="s.value" :label="s.label" />
+              </n-space>
+            </n-checkbox-group>
+          </div>
+          <div class="pref-section">
+            <h3 class="pref-title">🌍 偏好语言</h3>
+            <n-select v-model:value="preference.preferredLanguage" :options="langOptions" placeholder="选择偏好语言" style="max-width: 300px;" />
+          </div>
+          <div class="pref-section">
+            <h3 class="pref-title">💭 情绪偏好</h3>
+            <n-select v-model:value="preference.moodPreference" :options="moodOptions" placeholder="选择情绪偏好" style="max-width: 300px;" />
+          </div>
+          <n-button type="primary" style="margin-top: 16px;" @click="savePref">保存偏好设置</n-button>
         </n-tab-pane>
 
         <!-- 播放历史 -->
@@ -288,5 +380,17 @@ async function savePassword() {
   font-size: 12px;
   color: var(--text-tertiary);
   flex-shrink: 0;
+}
+
+/* 偏好问卷 */
+.pref-section {
+  margin-bottom: 24px;
+  max-width: 600px;
+}
+.pref-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
 }
 </style>

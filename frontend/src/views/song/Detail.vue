@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import VChart from 'vue-echarts'
 import { useRoute, useRouter } from 'vue-router'
 import { NCard, NSpace, NButton, NRate, NInput, NAvatar, NTag, NEmpty, useMessage } from 'naive-ui'
 import { getSongDetail, getMyRating, rateSong, toggleFavorite, checkFavorite, addComment, getComments, recordPlay, getSimilarSongs } from '../../api'
@@ -16,6 +17,28 @@ const comments = ref([])
 const commentsTotal = ref(0)
 const newComment = ref('')
 const similar = ref([])
+
+// 情感分析饼图配置
+const sentimentChartOption = computed(() => {
+  const pos = comments.value.filter(c => c.sentimentLabel === '正向').length
+  const neu = comments.value.filter(c => c.sentimentLabel === '中性').length
+  const neg = comments.value.filter(c => c.sentimentLabel === '负向').length
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { bottom: 0, textStyle: { color: '#8B949E', fontSize: 12 } },
+    series: [{
+      type: 'pie', radius: ['40%', '70%'], center: ['50%', '45%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 6, borderColor: '#0D1117', borderWidth: 2 },
+      label: { show: true, formatter: '{b}\n{d}%', color: '#C9D1D9', fontSize: 12 },
+      data: [
+        { value: pos, name: '正向', itemStyle: { color: '#3FB950' } },
+        { value: neu, name: '中性', itemStyle: { color: '#D29922' } },
+        { value: neg, name: '负向', itemStyle: { color: '#F85149' } },
+      ].filter(d => d.value > 0)
+    }]
+  }
+})
 
 async function loadSong(id) {
   song.value = null
@@ -120,6 +143,12 @@ async function submitComment() {
     <!-- 评论 -->
     <div class="comments-section">
       <h3 class="card-title">评论 <span class="comment-count">{{ commentsTotal }}</span></h3>
+
+      <!-- 情感分布 ECharts 饼图 -->
+      <div class="sentiment-chart-wrap" v-if="comments.length">
+        <v-chart :option="sentimentChartOption" style="height: 220px;" autoresize />
+      </div>
+
       <div class="comment-input-row">
         <n-input v-model:value="newComment" placeholder="写下你的感受..." @keyup.enter="submitComment" />
         <n-button type="primary" @click="submitComment">发表</n-button>
@@ -130,6 +159,9 @@ async function submitComment() {
           <div class="comment-body">
             <div class="comment-meta">
               <span class="comment-user">{{ c.username || '匿名' }}</span>
+              <span v-if="c.sentimentLabel" :class="['sentiment-tag', c.sentimentLabel === '正向' ? 'pos' : c.sentimentLabel === '负向' ? 'neg' : 'neu']">
+                {{ c.sentimentLabel === '正向' ? '🟢' : c.sentimentLabel === '负向' ? '🔴' : '🟡' }} {{ c.sentimentLabel }}
+              </span>
               <span class="comment-time">{{ c.createdAt?.replace('T', ' ').substring(0, 16) }}</span>
             </div>
             <div class="comment-text">{{ c.content }}</div>
@@ -365,6 +397,33 @@ async function submitComment() {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+/* ---- 情感分析 ---- */
+.sentiment-chart-wrap {
+  margin-bottom: 16px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.sentiment-tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.sentiment-tag.pos {
+  background: rgba(63, 185, 80, 0.12);
+  color: #3FB950;
+}
+.sentiment-tag.neu {
+  background: rgba(210, 153, 34, 0.12);
+  color: #D29922;
+}
+.sentiment-tag.neg {
+  background: rgba(248, 81, 73, 0.12);
+  color: #F85149;
 }
 
 /* ---- 相似推荐 ---- */

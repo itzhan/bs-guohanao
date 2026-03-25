@@ -18,7 +18,10 @@ const routes = [
       { path: 'artists', name: 'Artists', component: () => import('../views/artist/Index.vue'), meta: { title: '歌手管理' } },
       { path: 'genres', name: 'Genres', component: () => import('../views/genre/Index.vue'), meta: { title: '流派管理' } },
       { path: 'users', name: 'Users', component: () => import('../views/user/Index.vue'), meta: { title: '用户管理' } },
+      { path: 'portrait', name: 'Portrait', component: () => import('../views/portrait/Index.vue'), meta: { title: '用户画像' } },
       { path: 'comments', name: 'Comments', component: () => import('../views/comment/Index.vue'), meta: { title: '评论管理' } },
+      { path: 'strategy', name: 'Strategy', component: () => import('../views/strategy/Index.vue'), meta: { title: '推荐策略' } },
+      { path: 'experiment', name: 'Experiment', component: () => import('../views/experiment/Index.vue'), meta: { title: '算法对比' } },
       { path: 'logs', name: 'Logs', component: () => import('../views/log/Index.vue'), meta: { title: '操作日志' } },
     ]
   }

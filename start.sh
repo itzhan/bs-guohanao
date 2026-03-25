@@ -21,9 +21,9 @@ DB_NAME="music_recommend"
 DB_USER="root"
 DB_PASS="ab123168"
 
-BACKEND_PORT=5001
-FRONTEND_PORT=5173
-ADMIN_PORT=5174
+BACKEND_PORT=5002
+FRONTEND_PORT=5179
+ADMIN_PORT=5176
 
 # ============ 颜色定义 ============
 RED='\033[0;31m'
@@ -111,7 +111,15 @@ if [ -z "$DB_EXISTS" ] || [ "$TABLE_COUNT" -lt 5 ]; then
     fi
     if [ -f "$SQL_DIR/data.sql" ]; then
         mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --default-character-set=utf8mb4 < "$SQL_DIR/data.sql" 2>/dev/null
-        echo -e "  ${GREEN}✓${NC} 测试数据导入完成"
+        echo -e "  ${GREEN}✓${NC} 基础测试数据导入完成"
+    fi
+    if [ -f "$SQL_DIR/data_expand.sql" ]; then
+        mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --default-character-set=utf8mb4 < "$SQL_DIR/data_expand.sql" 2>/dev/null
+        echo -e "  ${GREEN}✓${NC} 扩展数据导入完成"
+    fi
+    if [ -f "$SQL_DIR/data_10x.sql" ]; then
+        mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --default-character-set=utf8mb4 < "$SQL_DIR/data_10x.sql" 2>/dev/null
+        echo -e "  ${GREEN}✓${NC} 10倍扩充数据导入完成"
     fi
 else
     echo -e "  ${GREEN}✓${NC} 数据库已存在 ($TABLE_COUNT 张表)"

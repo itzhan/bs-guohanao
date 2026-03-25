@@ -85,11 +85,17 @@ class InteractService:
         if not song:
             return None, '歌曲不存在'
 
+        # 情感分析
+        from app.services.sentiment_service import analyze_sentiment
+        score, label = analyze_sentiment(content)
+
         comment = Comment(
             user_id=user_id,
             song_id=song_id,
             content=content,
-            parent_id=parent_id
+            parent_id=parent_id,
+            sentiment_score=score,
+            sentiment_label=label
         )
         db.session.add(comment)
         db.session.commit()

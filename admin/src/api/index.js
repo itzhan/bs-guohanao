@@ -39,3 +39,28 @@ export const getGenreDistribution = () => request.get('/stats/genre-distribution
 export const getPlayTrend = (days) => request.get('/stats/play-trend', { params: { days } })
 export const getTopArtists = (limit) => request.get('/stats/top-artists', { params: { limit } })
 export const getLanguageDistribution = () => request.get('/stats/language-distribution')
+
+// 用户画像
+export const getPortraitOverview = () => request.get('/portrait/overview')
+export const getPortraitPreferences = () => request.get('/portrait/preferences')
+export const getPortraitActivity = () => request.get('/portrait/activity')
+export const getPortraitUser = (id) => request.get(`/portrait/${id}`)
+
+// 推荐策略
+export const getStrategyMetrics = () => request.get('/strategy/metrics')
+export const getStrategyConfig = () => request.get('/strategy/config')
+export const updateStrategyConfig = (data) => request.put('/strategy/config', data)
+
+// 异常预警
+export const getAlertList = (days) => request.get('/alert/list', { params: { days } })
+export const getAlertStats = () => request.get('/alert/stats')
+
+// 算法对比实验
+export const getExperimentComparison = () => request.get('/experiment/comparison')
+export const runExperiment = () => request.post('/experiment/run')
+export const getHdfsStatus = () => request.get('/experiment/hdfs-status')
+
+// 行为日志（MongoDB）
+export const getBehaviorLogs = (params) => request.get('/behavior/logs', { params })
+export const getBehaviorStats = () => request.get('/behavior/stats')
+

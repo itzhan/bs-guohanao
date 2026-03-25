@@ -189,3 +189,25 @@ def get_logs():
     module = request.args.get('module')
     items, total = AdminService.get_operation_logs(page, page_size, module)
     return page_response(items, total, page, page_size)
+
+
+# ========= 情感回填 =========
+@admin_bp.route('/comments/backfill-sentiment', methods=['POST'])
+@operator_required
+def backfill_sentiment():
+    """对所有缺失情感数据的评论进行批量回填"""
+    from app.models.interact import Comment as CommentModel
+    from app.services.sentiment_service import SentimentService
+    from app.extensions import db as _db
+
+    comments = CommentModel.query.filter(CommentModel.sentiment_label.is_(None)).all()
+    count = 0
+    for c in comments:
+        if c.content:
+            result = SentimentService.analyze_sentiment(c.content)
+            c.sentiment_score = result['score']
+            c.sentiment_label = result['label']
+            count += 1
+    _db.session.commit()
+    return success_response({'updated': count}, f'已回填 {count} 条评论的情感数据')
+

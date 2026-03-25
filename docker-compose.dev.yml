@@ -1,0 +1,129 @@
+# ============================================================
+# 基于大数据的音乐推荐与数据分析系统 - Docker 开发模式
+# 使用方法: docker compose -f docker-compose.dev.yml up -d
+#
+# 特点：
+#   - 后端代码热重载（挂载源码 + Flask debug 模式）
+#   - 前端/管理端 Vite 热更新 (HMR)
+#   - 修改代码后自动生效，无需重新构建镜像
+# ============================================================
+
+name: music-dev
+
+services:
+  # ---- MySQL 数据库 ----
+  mysql:
+    image: mysql:8.0
+    container_name: music-dev-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ab123168
+      MYSQL_DATABASE: music_recommend
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./sql/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+      - ./sql/data_expand.sql:/docker-entrypoint-initdb.d/03-data_expand.sql
+      - ./sql/data_10x.sql:/docker-entrypoint-initdb.d/04-data_10x.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pab123168"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---- Redis 缓存 ----
+  redis:
+    image: redis:7-alpine
+    container_name: music-dev-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---- MongoDB ----
+  mongo:
+    image: mongo:7
+    container_name: music-dev-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_dev_data:/data/db
+
+  # ---- Flask 后端（开发模式，代码热重载） ----
+  backend:
+    build: ./backend
+    container_name: music-dev-backend
+    restart: unless-stopped
+    ports:
+      - "5002:5001"
+    environment:
+      - FLASK_DEBUG=True
+      - SECRET_KEY=music-recommend-secret-key-2026
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=music_recommend
+      - DB_USER=root
+      - DB_PASS=ab123168
+      - JWT_SECRET_KEY=jwt-music-secret-2026
+      - REDIS_URL=redis://redis:6379/0
+      - MONGO_URI=mongodb://mongo:27017/
+      - MONGO_DB_NAME=music_recommend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    command: ["python", "run.py"]
+
+  # ---- 用户前端（Vite 开发模式，HMR 热更新） ----
+  frontend:
+    image: node:20-alpine
+    container_name: music-dev-frontend
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "5179:5179"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      - VITE_API_TARGET=http://backend:5001
+    command: sh -c "npm install && npx vite --host 0.0.0.0 --port 5179"
+    depends_on:
+      - backend
+
+  # ---- 管理端（Vite 开发模式，HMR 热更新） ----
+  admin:
+    image: node:20-alpine
+    container_name: music-dev-admin
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "5176:5176"
+    volumes:
+      - ./admin:/app
+      - admin_node_modules:/app/node_modules
+    environment:
+      - VITE_API_TARGET=http://backend:5001
+    command: sh -c "npm install && npx vite --host 0.0.0.0 --port 5176"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_dev_data:
+  mongo_dev_data:
+  frontend_node_modules:
+  admin_node_modules:
